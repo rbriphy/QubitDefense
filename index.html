@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Tower Defense</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a1a;
+            color: #00ffff;
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden;
+            min-height: 100vh;
+        }
+        
+        #game-container {
+            display: flex;
+            height: 100vh;
+            background: 
+                radial-gradient(ellipse at 20% 80%, rgba(0, 100, 150, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(100, 0, 150, 0.1) 0%, transparent 50%),
+                #0a0a1a;
+        }
+        
+        #canvas-wrapper {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 10px;
+        }
+        
+        canvas {
+            border: 2px solid #00ffff33;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 255, 0.2),
+                inset 0 0 60px rgba(0, 255, 255, 0.05);
+            background: #050510;
+        }
+        
+        #sidebar {
+            width: 280px;
+            min-width: 280px;
+            background: linear-gradient(180deg, #0d0d20 0%, #080812 100%);
+            border-left: 1px solid #00ffff22;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+        }
+        
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            text-align: center;
+            color: #00ffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            padding-bottom: 10px;
+            border-bottom: 1px solid #00ffff33;
+        }
+        
+        .panel {
+            background: rgba(0, 255, 255, 0.03);
+            border: 1px solid #00ffff22;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        
+        .panel h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            color: #00aaaa;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+        }
+        
+        #stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.4rem;
+            color: #00ffff;
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        .stat-label {
+            font-size: 0.6rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        #tower-select {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+        
+        .tower-btn {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid #00ffff33;
+            border-radius: 5px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tower-btn:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: #00ffff66;
+        }
+        
+        .tower-btn.selected {
+            background: rgba(0, 255, 255, 0.15);
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+        
+        .tower-icon {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        
+        .tower-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .tower-name {
+            color: #00ffff;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+        
+        .tower-cost {
+            color: #ffaa00;
+            font-size: 0.65rem;
+        }
+        
+        .tower-icon.hadamard { background: linear-gradient(135deg, #00ffff33, #00ffff11); border: 1px solid #00ffff; }
+        .tower-icon.rx20 { background: linear-gradient(135deg, #ff888833, #ff888811); border: 1px solid #ff8888; }
+        .tower-icon.rx45 { background: linear-gradient(135deg, #ff666633, #ff666611); border: 1px solid #ff6666; }
+        .tower-icon.rx90 { background: linear-gradient(135deg, #ff444433, #ff444411); border: 1px solid #ff4444; }
+        .tower-icon.ry20 { background: linear-gradient(135deg, #88ff8833, #88ff8811); border: 1px solid #88ff88; }
+        .tower-icon.ry45 { background: linear-gradient(135deg, #66ff6633, #66ff6611); border: 1px solid #66ff66; }
+        .tower-icon.ry90 { background: linear-gradient(135deg, #44ff4433, #44ff4411); border: 1px solid #44ff44; }
+        .tower-icon.rz20 { background: linear-gradient(135deg, #ff88ff33, #ff88ff11); border: 1px solid #ff88ff; }
+        .tower-icon.rz45 { background: linear-gradient(135deg, #ff66ff33, #ff66ff11); border: 1px solid #ff66ff; }
+        .tower-icon.rz90 { background: linear-gradient(135deg, #ff44ff33, #ff44ff11); border: 1px solid #ff44ff; }
+        .tower-icon.measure { background: linear-gradient(135deg, #ffff6633, #ffff6611); border: 1px solid #ffff66; }
+        .tower-icon.measureX { background: linear-gradient(135deg, #66ffff33, #66ffff11); border: 1px solid #66ffff; }
+        .tower-icon.measureY { background: linear-gradient(135deg, #ffaa6633, #ffaa6611); border: 1px solid #ffaa66; }
+        
+        #quantum-info {
+            font-size: 0.65rem;
+            line-height: 1.5;
+            color: #888;
+        }
+        
+        #quantum-info code {
+            color: #00ffff;
+            background: rgba(0, 255, 255, 0.1);
+            padding: 1px 3px;
+            border-radius: 2px;
+        }
+        
+        #message-log {
+            flex: 1;
+            overflow-y: auto;
+            font-size: 0.6rem;
+            color: #555;
+            max-height: 120px;
+            min-height: 80px;
+        }
+        
+        .log-entry {
+            padding: 3px 0;
+            border-bottom: 1px solid #111;
+        }
+        
+        .log-entry.kill { color: #00ff00; }
+        .log-entry.spawn { color: #ffaa00; }
+        .log-entry.collapse { color: #ff00ff; }
+        
+        #start-btn {
+            background: linear-gradient(135deg, #00ffff44, #00ffff22);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        #start-btn:hover {
+            background: linear-gradient(135deg, #00ffff66, #00ffff44);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+        }
+        
+        #start-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        
+        #instructions {
+            font-size: 0.6rem;
+            color: #555;
+            text-align: center;
+            line-height: 1.5;
+        }
+        
+        .key {
+            display: inline-block;
+            background: #222;
+            padding: 2px 5px;
+            border-radius: 3px;
+            border: 1px solid #333;
+            color: #888;
+        }
+        
+        #speed-toggle {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+        
+        .speed-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff44;
+            color: #00ffff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            transition: all 0.2s;
+        }
+        
+        .speed-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+        }
+        
+        .speed-btn.active {
+            background: #00ffff;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="canvas-wrapper">
+            <canvas id="game" width="1000" height="750"></canvas>
+        </div>
+        <div id="sidebar">
+            <h1>QUANTUM TD</h1>
+            
+            <div class="panel">
+                <h2>STATUS</h2>
+                <div id="stats">
+                    <div class="stat">
+                        <div class="stat-value" id="credits">100</div>
+                        <div class="stat-label">Credits</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="wave">1</div>
+                        <div class="stat-label">Wave</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="lives">20</div>
+                        <div class="stat-label">Lives</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="kills">0</div>
+                        <div class="stat-label">Kills</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>SPEED</h2>
+                <div id="speed-toggle">
+                    <button class="speed-btn active" data-speed="1">1X</button>
+                    <button class="speed-btn" data-speed="2">2X</button>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>TOWERS</h2>
+                <div id="tower-select">
+                    <div class="tower-btn" data-tower="hadamard">
+                        <div class="tower-icon hadamard">H</div>
+                        <div class="tower-info">
+                            <div class="tower-name">Hadamard</div>
+                            <div class="tower-cost">15</div>
+                        </div>
+                    </div>
+                    <div class="tower-btn" data-tower="rx20">
+                        <div class="tower-icon rx20">X20</div>
+                        <div class="tower-info">
+                            <div class="tower-name">Rx 20°</div>
+                            <div class="tower-cost">8</div>
+                        </div>
+                    </div>
+                    <div class="tower-btn" data-tower="rx45">
+                        <div class="tower-icon rx45">X45</div>
+                        <div class="tower-info">
+                            <div class="tower-name">Rx 45°</div>
+                            <div class="tower-cost">15</div>
+                        </div>
+                    </div>
+                    <div class="tower-btn" data-tower="rx90">
+                        <div class="tower-icon rx90">X90</div>
+                        <div class="tower-info">
+                            <div class="tower-name">Rx 90°</div>
+                            <div class="tower-cost">25</div>
+                        </div>
+                    </div>
+                    <div class="tower-btn" data-tower="ry20">
+                        <div class="tower-icon ry20">Y20</div>
+                        <div class="tower-info">
+                            <div class="tower-name">Ry 20°</div>
+                            <div class="tower-cost">8</div>
+                        </div>
+                    </div>
+                    <div class="tower-btn" data-tower="ry45">
+                        <div class="tower-icon ry45">Y45</div>
+                        <div class="tower-info">
+                            <div class="tower-name">Ry 45°</div>
+                            <div class="tower-cost">15</div>
+                        </div>
+                    </div>
+                    <div class="tower-btn" data-tower="ry90">
+                        <div class="tower-icon ry90">Y90</div>
+                        <div class="tower-info">
+                            <div class="tower-name">Ry 90°</div>
+                            <div class="tower-cost">25</div>
+                        </div>
+                    </div>
+                    <div class="tower-btn" data-tower="rz20">
+                        <div class="tower-icon rz20">Z20</div>
+                        <div class="tower-info">
+                            <div class="tower-name">Rz 20°</div>
+                            <div class="tower-cost">5</div>
+                        </div>
+                    </div>
+                    <div class="tower-btn" data-tower="rz45">
+                        <div class="tower-icon rz45">Z45</div>
+                        <div class="tower-info">
+                            <div class="tower-name">Rz 45°</div>
+                            <div class="tower-cost">8</div>
+                        </div>
+                    </div>
+                    <div class="tower-btn" data-tower="rz90">
+                        <div class="tower-icon rz90">Z90</div>
+                        <div class="tower-info">
+                            <div class="tower-name">Rz 90°</div>
+                            <div class="tower-cost">12</div>
+                        </div>
+                    </div>
+                    <div class="tower-btn" data-tower="measure">
+                        <div class="tower-icon measure">Ψ</div>
+                        <div class="tower-info">
+                            <div class="tower-name">Z Observe</div>
+                            <div class="tower-cost">40</div>
+                        </div>
+                    </div>
+                    <div class="tower-btn" data-tower="measureX">
+                        <div class="tower-icon measureX">+</div>
+                        <div class="tower-info">
+                            <div class="tower-name">X Observe</div>
+                            <div class="tower-cost">50</div>
+                        </div>
+                    </div>
+                    <div class="tower-btn" data-tower="measureY">
+                        <div class="tower-icon measureY">Y</div>
+                        <div class="tower-info">
+                            <div class="tower-name">Y Observe</div>
+                            <div class="tower-cost">50</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>QUANTUM STATE</h2>
+                <div id="quantum-info">
+                    <p><code>|ψ⟩ = α|0⟩ + β|1⟩</code></p>
+                    <p><code>|0⟩</code> = full HP, <code>|1⟩</code> = dead</p>
+                    <p id="selected-enemy-info">Hover enemy for state</p>
+                </div>
+            </div>
+            
+            <div id="message-log"></div>
+            
+            <button id="start-btn">Start Wave</button>
+            
+            <div id="instructions">
+                <span class="key">Click</span> path to place<br>
+                <span class="key">Right-click</span> remove (50%)
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        
+        const Complex = {
+            create: (re, im) => ({ re, im }),
+            add: (a, b) => ({ re: a.re + b.re, im: a.im + b.im }),
+            sub: (a, b) => ({ re: a.re - b.re, im: a.im - b.im }),
+            mul: (a, b) => ({ 
+                re: a.re * b.re - a.im * b.im, 
+                im: a.re * b.im + a.im * b.re 
+            }),
+            scale: (a, s) => ({ re: a.re * s, im: a.im * s }),
+            norm: (a) => Math.sqrt(a.re * a.re + a.im * a.im),
+            conjugate: (a) => ({ re: a.re, im: -a.im })
+        };
+        
+        function createQuantumState() {
+            return { 
+                alpha: Complex.create(1, 0),
+                beta: Complex.create(0, 0)
+            };
+        }
+        
+        function normalize(state) {
+            const normAlpha = Complex.norm(state.alpha);
+            const normBeta = Complex.norm(state.beta);
+            const total = Math.sqrt(normAlpha * normAlpha + normBeta * normBeta);
+            if (total > 0.0001) {
+                state.alpha = Complex.scale(state.alpha, 1/total);
+                state.beta = Complex.scale(state.beta, 1/total);
+            }
+            return state;
+        }
+        
+        function applyRx(state, angleDeg) {
+            const angle = angleDeg * Math.PI / 180;
+            const cos = Math.cos(angle / 2);
+            const sin = Math.sin(angle / 2);
+            
+            const iSin = Complex.create(0, -sin);
+            
+            const newAlpha = Complex.add(
+                Complex.scale(state.alpha, cos),
+                Complex.mul(state.beta, iSin)
+            );
+            const newBeta = Complex.add(
+                Complex.scale(state.beta, cos),
+                Complex.mul(state.alpha, iSin)
+            );
+            
+            state.alpha = newAlpha;
+            state.beta = newBeta;
+            return normalize(state);
+        }
+        
+        function applyRy(state, angleDeg) {
+            const angle = angleDeg * Math.PI / 180;
+            const cos = Math.cos(angle / 2);
+            const sin = Math.sin(angle / 2);
+            
+            const newAlpha = Complex.add(
+                Complex.scale(state.alpha, cos),
+                Complex.scale(state.beta, -sin)
+            );
+            const newBeta = Complex.add(
+                Complex.scale(state.beta, cos),
+                Complex.scale(state.alpha, sin)
+            );
+            
+            state.alpha = newAlpha;
+            state.beta = newBeta;
+            return normalize(state);
+        }
+        
+        function applyRz(state, angleDeg) {
+            const angle = angleDeg * Math.PI / 180;
+            const cos = Math.cos(angle / 2);
+            const sin = Math.sin(angle / 2);
+            
+            const phaseAlpha = Complex.create(cos, -sin);
+            const phaseBeta = Complex.create(cos, sin);
+            
+            state.alpha = Complex.mul(state.alpha, phaseAlpha);
+            state.beta = Complex.mul(state.beta, phaseBeta);
+            return normalize(state);
+        }
+        
+        function applyHadamard(state) {
+            const invSqrt2 = 1 / Math.sqrt(2);
+            const newAlpha = Complex.add(
+                Complex.scale(state.alpha, invSqrt2),
+                Complex.scale(state.beta, invSqrt2)
+            );
+            const newBeta = Complex.add(
+                Complex.scale(state.alpha, invSqrt2),
+                Complex.scale(state.beta, -invSqrt2)
+            );
+            
+            state.alpha = newAlpha;
+            state.beta = newBeta;
+            return normalize(state);
+        }
+        
+        function measureZ(state) {
+            const probOne = Complex.norm(state.beta) ** 2;
+            const roll = Math.random();
+            
+            if (roll < probOne) {
+                return { collapsed: true, alive: false, basis: 'Z', result: '|1⟩' };
+            } else {
+                return { collapsed: true, alive: true, basis: 'Z', result: '|0⟩' };
+            }
+        }
+        
+        function measureX(state) {
+            const alphaPlusBeta = Complex.add(state.alpha, state.beta);
+            const probPlus = (Complex.norm(alphaPlusBeta) ** 2) / 2;
+            const roll = Math.random();
+            
+            if (roll < probPlus) {
+                return { collapsed: true, alive: false, basis: 'X', result: '|+⟩' };
+            } else {
+                return { collapsed: true, alive: true, basis: 'X', result: '|-⟩' };
+            }
+        }
+        
+        function measureY(state) {
+            const alphaMinusIBeta = Complex.add(state.alpha, Complex.create(state.beta.im, -state.beta.re));
+            const probUp = (Complex.norm(alphaMinusIBeta) ** 2) / 2;
+            const roll = Math.random();
+            
+            if (roll < probUp) {
+                return { collapsed: true, alive: false, basis: 'Y', result: '|↗⟩' };
+            } else {
+                return { collapsed: true, alive: true, basis: 'Y', result: '|↙⟩' };
+            }
+        }
+        
+        function measure(state, basis = 'Z') {
+            if (basis === 'X') return measureX(state);
+            if (basis === 'Y') return measureY(state);
+            return measureZ(state);
+        }
+        
+        function getHealth(state) {
+            return Complex.norm(state.alpha) ** 2;
+        }
+        
+        function getDeathProb(state) {
+            return Complex.norm(state.beta) ** 2;
+        }
+        
+        function stateToBloch(state) {
+            const alpha = state.alpha;
+            const beta = state.beta;
+            
+            const alphaMag = Complex.norm(alpha);
+            const theta = 2 * Math.acos(Math.min(1, Math.max(0, alphaMag)));
+            
+            let phi = 0;
+            if (Complex.norm(beta) > 0.001) {
+                const betaPhase = Math.atan2(beta.im, beta.re);
+                const alphaPhase = Math.atan2(alpha.im, alpha.re);
+                phi = betaPhase - alphaPhase;
+                if (phi < 0) phi += 2 * Math.PI;
+            }
+            
+            return { theta, phi };
+        }
+        
+        function drawBlochSphere(cx, cy, radius, state) {
+            const bloch = stateToBloch(state);
+            const theta = bloch.theta;
+            const phi = bloch.phi;
+            
+            const x = Math.sin(theta) * Math.cos(phi);
+            const y = Math.sin(theta) * Math.sin(phi);
+            const z = Math.cos(theta);
+            
+            const projX = cx + (x * 0.7 - z * 0.7) * radius;
+            const projY = cy + (y - (x * 0.3 + z * 0.3)) * radius;
+            
+            ctx.strokeStyle = '#00ffff44';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            ctx.strokeStyle = '#00ffff22';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - radius);
+            ctx.lineTo(cx, cy + radius);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#00ffff88';
+            ctx.font = '7px "Share Tech Mono"';
+            ctx.textAlign = 'center';
+            ctx.fillText('|0⟩', cx, cy - radius - 3);
+            ctx.fillText('|1⟩', cx, cy + radius + 7);
+            
+            const health = getHealth(state);
+            const deathProb = getDeathProb(state);
+            
+            const r = Math.floor(255 * deathProb);
+            const g = Math.floor(255 * (1 - deathProb) * 0.5);
+            const b = Math.floor(255 * health);
+            const color = `rgb(${r},${g},${b})`;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(projX, projY);
+            ctx.stroke();
+            
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(projX, projY, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        const game = {
+            credits: 100,
+            wave: 1,
+            lives: 20,
+            kills: 0,
+            running: false,
+            waveInProgress: false,
+            selectedTower: 'measure',
+            speed: 1,
+            enemies: [],
+            towers: [],
+            particles: [],
+            spawnTimer: 0,
+            enemiesToSpawn: 0,
+            gameOver: false,
+            victory: false,
+            hoveredEnemy: null
+        };
+        
+        const TOWER_TYPES = {
+            hadamard: { cost: 15, color: '#00ffff', label: 'H' },
+            rx20: { cost: 8, color: '#ff8888', label: 'X20' },
+            rx45: { cost: 15, color: '#ff6666', label: 'X45' },
+            rx90: { cost: 25, color: '#ff4444', label: 'X90' },
+            ry20: { cost: 8, color: '#88ff88', label: 'Y20' },
+            ry45: { cost: 15, color: '#66ff66', label: 'Y45' },
+            ry90: { cost: 25, color: '#44ff44', label: 'Y90' },
+            rz20: { cost: 5, color: '#ff88ff', label: 'Z20' },
+            rz45: { cost: 8, color: '#ff66ff', label: 'Z45' },
+            rz90: { cost: 12, color: '#ff44ff', label: 'Z90' },
+            measure: { cost: 40, color: '#ffff66', label: 'Ψ' },
+            measureX: { cost: 50, color: '#66ffff', label: '+' },
+            measureY: { cost: 50, color: '#ffaa66', label: 'Y' }
+        };
+        
+        const PATH = [
+            {x: -30, y: 100},
+            {x: 150, y: 100},
+            {x: 150, y: 280},
+            {x: 450, y: 280},
+            {x: 450, y: 100},
+            {x: 700, y: 100},
+            {x: 700, y: 500},
+            {x: 300, y: 500},
+            {x: 300, y: 650},
+            {x: 850, y: 650},
+            {x: 850, y: 380},
+            {x: 1050, y: 380}
+        ];
+        
+        const WAVES = [
+            { count: 5, interval: 2000, hpMultiplier: 1 },
+            { count: 8, interval: 1800, hpMultiplier: 1.2 },
+            { count: 12, interval: 1500, hpMultiplier: 1.5 },
+            { count: 15, interval: 1200, hpMultiplier: 2 },
+            { count: 20, interval: 1000, hpMultiplier: 2.5 }
+        ];
+        
+        class Enemy {
+            constructor(waveMultiplier) {
+                this.x = PATH[0].x;
+                this.y = PATH[0].y;
+                this.pathIndex = 0;
+                this.speed = 0.7 + waveMultiplier * 0.08;
+                this.quantumState = createQuantumState();
+                this.size = 20;
+                this.alive = true;
+                this.reachedEnd = false;
+                this.flashTimer = 0;
+            }
+            
+            update() {
+                if (!this.alive) return;
+                
+                const target = PATH[this.pathIndex + 1];
+                if (!target) {
+                    this.reachedEnd = true;
+                    return;
+                }
+                
+                const dx = target.x - this.x;
+                const dy = target.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const currentSpeed = this.speed * game.speed;
+                
+                if (dist < currentSpeed) {
+                    this.pathIndex++;
+                    if (this.pathIndex >= PATH.length - 1) {
+                        this.reachedEnd = true;
+                    }
+                } else {
+                    this.x += (dx / dist) * currentSpeed;
+                    this.y += (dy / dist) * currentSpeed;
+                }
+                
+                if (this.flashTimer > 0) this.flashTimer--;
+            }
+            
+            applyGate(gateType) {
+                switch (gateType) {
+                    case 'hadamard': 
+                        applyHadamard(this.quantumState); 
+                        break;
+                    case 'rx20': applyRx(this.quantumState, 20); break;
+                    case 'rx45': applyRx(this.quantumState, 45); break;
+                    case 'rx90': applyRx(this.quantumState, 90); break;
+                    case 'ry20': applyRy(this.quantumState, 20); break;
+                    case 'ry45': applyRy(this.quantumState, 45); break;
+                    case 'ry90': applyRy(this.quantumState, 90); break;
+                    case 'rz20': applyRz(this.quantumState, 20); break;
+                    case 'rz45': applyRz(this.quantumState, 45); break;
+                    case 'rz90': applyRz(this.quantumState, 90); break;
+                    case 'measure':
+                        const resultZ = measure(this.quantumState, 'Z');
+                        this.handleMeasurement(resultZ);
+                        break;
+                    case 'measureX':
+                        const resultX = measure(this.quantumState, 'X');
+                        this.handleMeasurement(resultX);
+                        break;
+                    case 'measureY':
+                        const resultY = measure(this.quantumState, 'Y');
+                        this.handleMeasurement(resultY);
+                        break;
+                }
+            }
+            
+            handleMeasurement(result) {
+                if (result.collapsed) {
+                    this.flashTimer = 20;
+                    if (!result.alive) {
+                        this.alive = false;
+                        game.kills++;
+                        game.credits += 15;
+                        log(`Collapsed to ${result.result} (${result.basis}) - KILLED!`, 'kill');
+                        createParticles(this.x, this.y, '#00ff00');
+                    } else {
+                        this.quantumState = createQuantumState();
+                        log(`Collapsed to ${result.result} (${result.basis}) - SURVIVED!`, 'collapse');
+                        createParticles(this.x, this.y, '#ff0000');
+                    }
+                }
+            }
+            
+            draw() {
+                if (!this.alive) return;
+                
+                const health = getHealth(this.quantumState);
+                const deathProb = getDeathProb(this.quantumState);
+                
+                ctx.save();
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.flashTimer > 0 ? '#ffffff' : '#00ffff';
+                
+                const r = Math.floor(255 * deathProb);
+                const g = Math.floor(255 * health * 0.7);
+                const b = Math.floor(255 * health);
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                ctx.restore();
+                
+                const amp0 = this.quantumState.alpha;
+                const amp1 = this.quantumState.beta;
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '8px "Share Tech Mono"';
+                ctx.textAlign = 'center';
+                ctx.fillText(`|0⟩:${amp0.re >= 0 ? '' : '-'}${Math.abs(amp0.re).toFixed(2)}${amp0.im >= 0 ? '+' : '-'}${Math.abs(amp0.im).toFixed(2)}i`, this.x, this.y - this.size - 12);
+                ctx.fillText(`|1⟩:${amp1.re >= 0 ? '' : '-'}${Math.abs(amp1.re).toFixed(2)}${amp1.im >= 0 ? '+' : '-'}${Math.abs(amp1.im).toFixed(2)}i`, this.x, this.y - this.size - 3);
+                
+                const barWidth = 40;
+                const barHeight = 4;
+                ctx.fillStyle = '#222';
+                ctx.fillRect(this.x - barWidth/2, this.y + this.size + 5, barWidth, barHeight);
+                ctx.fillStyle = '#00ffff';
+                ctx.fillRect(this.x - barWidth/2, this.y + this.size + 5, barWidth * health, barHeight);
+                
+                drawBlochSphere(this.x + 25, this.y + 25, 12, this.quantumState);
+            }
+        }
+        
+        class Tower {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.range = 55;
+                this.cooldown = 0;
+                this.maxCooldown = 35;
+                this.pulseTimer = 0;
+            }
+            
+            update() {
+                if (this.cooldown > 0) this.cooldown -= game.speed;
+                this.pulseTimer += game.speed;
+            }
+            
+            draw() {
+                const config = TOWER_TYPES[this.type];
+                
+                ctx.save();
+                ctx.globalAlpha = 0.08 + Math.sin(this.pulseTimer * 0.1) * 0.03;
+                ctx.fillStyle = config.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.range, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                
+                ctx.fillStyle = '#111';
+                ctx.strokeStyle = config.color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 20, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                ctx.save();
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = config.color;
+                ctx.fillStyle = config.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 14, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 11px "Orbitron"';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(config.label, this.x, this.y);
+            }
+            
+            checkAndApply(enemies) {
+                if (this.cooldown > 0) return;
+                
+                for (const enemy of enemies) {
+                    if (!enemy.alive) continue;
+                    
+                    const dx = enemy.x - this.x;
+                    const dy = enemy.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < this.range) {
+                        enemy.applyGate(this.type);
+                        this.cooldown = this.maxCooldown;
+                        createParticles(this.x, this.y, TOWER_TYPES[this.type].color, 4);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        function createParticles(x, y, color, count = 8) {
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+                const speed = 1.5 + Math.random() * 1.5;
+                game.particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 25,
+                    color,
+                    size: 2 + Math.random() * 2
+                });
+            }
+        }
+        
+        function updateParticles() {
+            for (let i = game.particles.length - 1; i >= 0; i--) {
+                const p = game.particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                if (p.life <= 0) game.particles.splice(i, 1);
+            }
+        }
+        
+        function drawParticles() {
+            for (const p of game.particles) {
+                ctx.globalAlpha = p.life / 25;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        }
+        
+        function drawPath() {
+            ctx.strokeStyle = '#00ffff22';
+            ctx.lineWidth = 40;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(PATH[0].x, PATH[0].y);
+            for (let i = 1; i < PATH.length; i++) ctx.lineTo(PATH[i].x, PATH[i].y);
+            ctx.stroke();
+            
+            ctx.strokeStyle = '#00ffff11';
+            ctx.lineWidth = 28;
+            ctx.stroke();
+            
+            ctx.fillStyle = '#00ffff33';
+            for (const point of PATH) {
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.fillStyle = '#00ff00';
+            ctx.font = '12px "Orbitron"';
+            ctx.textAlign = 'center';
+            ctx.fillText('START', PATH[0].x, PATH[0].y - 30);
+            
+            ctx.fillStyle = '#ff0000';
+            ctx.fillText('END', PATH[PATH.length-1].x, PATH[PATH.length-1].y - 30);
+        }
+        
+        let placementPreview = null;
+        
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+            
+            let nearPath = false;
+            for (let i = 0; i < PATH.length - 1; i++) {
+                const dist = pointToSegmentDistance(x, y, PATH[i].x, PATH[i].y, PATH[i+1].x, PATH[i+1].y);
+                if (dist < 30) { nearPath = true; break; }
+            }
+            
+            placementPreview = nearPath ? { x, y } : null;
+            
+            game.hoveredEnemy = null;
+            for (const enemy of game.enemies) {
+                if (!enemy.alive) continue;
+                const dx = enemy.x - x;
+                const dy = enemy.y - y;
+                if (Math.sqrt(dx*dx + dy*dy) < enemy.size + 15) {
+                    game.hoveredEnemy = enemy;
+                    break;
+                }
+            }
+            
+            updateHoverInfo();
+        });
+        
+        function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
+            const A = px - x1, B = py - y1, C = x2 - x1, D = y2 - y1;
+            const dot = A * C + B * D;
+            const lenSq = C * C + D * D;
+            let param = lenSq !== 0 ? dot / lenSq : -1;
+            
+            let xx, yy;
+            if (param < 0) { xx = x1; yy = y1; }
+            else if (param > 1) { xx = x2; yy = y2; }
+            else { xx = x1 + param * C; yy = y1 + param * D; }
+            
+            return Math.sqrt((px - xx)**2 + (py - yy)**2);
+        }
+        
+        function updateHoverInfo() {
+            const info = document.getElementById('selected-enemy-info');
+            if (game.hoveredEnemy) {
+                const state = game.hoveredEnemy.quantumState;
+                const alphaMag = Complex.norm(state.alpha);
+                const betaMag = Complex.norm(state.beta);
+                const alphaPhase = Math.atan2(state.alpha.im, state.alpha.re) * 180 / Math.PI;
+                const betaPhase = Math.atan2(state.beta.im, state.beta.re) * 180 / Math.PI;
+                info.innerHTML = `α: ${alphaMag.toFixed(2)}∠${alphaPhase.toFixed(0)}°<br>β: ${betaMag.toFixed(2)}∠${betaPhase.toFixed(0)}°`;
+            } else {
+                info.textContent = 'Hover enemy for state';
+            }
+        }
+        
+        canvas.addEventListener('click', (e) => {
+            if (game.gameOver || game.victory || !placementPreview) return;
+            
+            const cost = TOWER_TYPES[game.selectedTower].cost;
+            if (game.credits < cost) { log('Not enough credits!', 'spawn'); return; }
+            
+            for (const tower of game.towers) {
+                const dx = tower.x - placementPreview.x;
+                const dy = tower.y - placementPreview.y;
+                if (Math.sqrt(dx*dx + dy*dy) < 30) return;
+            }
+            
+            game.towers.push(new Tower(placementPreview.x, placementPreview.y, game.selectedTower));
+            game.credits -= cost;
+            log(`Placed ${game.selectedTower} (-${cost})`, 'spawn');
+        });
+        
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (game.gameOver || game.victory) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+            
+            for (let i = 0; i < game.towers.length; i++) {
+                const tower = game.towers[i];
+                const dx = tower.x - x;
+                const dy = tower.y - y;
+                if (Math.sqrt(dx*dx + dy*dy) < 25) {
+                    const refund = Math.floor(TOWER_TYPES[tower.type].cost * 0.5);
+                    game.credits += refund;
+                    game.towers.splice(i, 1);
+                    log(`Removed (+${refund})`, 'collapse');
+                    break;
+                }
+            }
+        });
+        
+        document.querySelectorAll('.tower-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                game.selectedTower = btn.dataset.tower;
+            });
+        });
+        
+        document.querySelectorAll('.speed-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                game.speed = parseInt(btn.dataset.speed);
+            });
+        });
+        
+        document.getElementById('start-btn').addEventListener('click', () => {
+            if (game.waveInProgress || game.gameOver || game.victory) return;
+            
+            const waveConfig = WAVES[game.wave - 1];
+            if (!waveConfig) { game.victory = true; log('VICTORY!', 'kill'); return; }
+            
+            game.waveInProgress = true;
+            game.enemiesToSpawn = waveConfig.count;
+            game.spawnTimer = 0;
+            document.getElementById('start-btn').disabled = true;
+            log(`Wave ${game.wave}: ${waveConfig.count} enemies`, 'spawn');
+        });
+        
+        function log(msg, type = '') {
+            const logEl = document.getElementById('message-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = msg;
+            logEl.insertBefore(entry, logEl.firstChild);
+            if (logEl.children.length > 15) logEl.removeChild(logEl.lastChild);
+        }
+        
+        function updateUI() {
+            document.getElementById('credits').textContent = game.credits;
+            document.getElementById('wave').textContent = game.wave;
+            document.getElementById('lives').textContent = game.lives;
+            document.getElementById('kills').textContent = game.kills;
+        }
+        
+        let lastTime = 0;
+        
+        function gameLoop(timestamp) {
+            const dt = (timestamp - lastTime) * game.speed;
+            lastTime = timestamp;
+            
+            ctx.fillStyle = '#050510';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = '#00ffff06';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
+            for (let y = 0; y < canvas.height; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
+            
+            drawPath();
+            
+            if (game.running && !game.gameOver && !game.victory) {
+                if (game.enemiesToSpawn > 0) {
+                    game.spawnTimer += dt;
+                    const waveConfig = WAVES[game.wave - 1];
+                    if (game.spawnTimer >= waveConfig.interval) {
+                        game.enemies.push(new Enemy(waveConfig.hpMultiplier));
+                        game.enemiesToSpawn--;
+                        game.spawnTimer = 0;
+                    }
+                }
+                
+                for (const tower of game.towers) { tower.update(); tower.checkAndApply(game.enemies); }
+                
+                for (let i = game.enemies.length - 1; i >= 0; i--) {
+                    const enemy = game.enemies[i];
+                    enemy.update();
+                    
+                    if (enemy.reachedEnd && enemy.alive) {
+                        game.lives--;
+                        game.enemies.splice(i, 1);
+                        log('Enemy escaped! -1 life', 'spawn');
+                        if (game.lives <= 0) { game.gameOver = true; log('GAME OVER', 'kill'); }
+                    } else if (!enemy.alive) {
+                        game.enemies.splice(i, 1);
+                    }
+                }
+                
+                updateParticles();
+                
+                if (game.waveInProgress && game.enemiesToSpawn === 0 && game.enemies.length === 0) {
+                    game.waveInProgress = false;
+                    game.wave++;
+                    document.getElementById('start-btn').disabled = false;
+                    if (game.wave > WAVES.length) { game.victory = true; log('VICTORY!', 'kill'); }
+                    else log(`Wave complete! Wave ${game.wave} ready.`, 'kill');
+                }
+            }
+            
+            for (const tower of game.towers) tower.draw();
+            for (const enemy of game.enemies) enemy.draw();
+            drawParticles();
+            
+            if (placementPreview && !game.gameOver && !game.victory) {
+                const config = TOWER_TYPES[game.selectedTower];
+                ctx.globalAlpha = 0.5;
+                ctx.fillStyle = config.color;
+                ctx.beginPath();
+                ctx.arc(placementPreview.x, placementPreview.y, 18, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                
+                ctx.strokeStyle = config.color;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.arc(placementPreview.x, placementPreview.y, 55, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+            
+            if (game.gameOver) {
+                ctx.fillStyle = 'rgba(80, 0, 0, 0.5)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#ff0000';
+                ctx.font = '50px "Orbitron"';
+                ctx.textAlign = 'center';
+                ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2);
+            }
+            
+            if (game.victory) {
+                ctx.fillStyle = 'rgba(0, 60, 30, 0.5)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#00ff00';
+                ctx.font = '50px "Orbitron"';
+                ctx.textAlign = 'center';
+                ctx.fillText('VICTORY!', canvas.width/2, canvas.height/2);
+            }
+            
+            updateUI();
+            updateHoverInfo();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        game.running = true;
+        log('Welcome to Quantum TD!', 'spawn');
+        log('Place towers, then Observe to kill!', 'collapse');
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
