@@ -14,6 +14,7 @@ const game = {
     waveInProgress: false,
     selectedTower: 'measure',
     speed: 1,
+    paused: false,
     enemies: [],
     towers: [],
     particles: [],
@@ -64,13 +65,13 @@ function gameLoop(timestamp) {
     drawPath();
     
     // Game logic
-    if (game.running && !game.gameOver && !game.victory) {
+    if (game.running && !game.gameOver && !game.victory && !game.paused) {
         // Spawn enemies
         if (game.enemiesToSpawn > 0) {
             game.spawnTimer += dt;
             const waveConfig = WAVES[game.wave - 1];
             if (waveConfig && game.spawnTimer >= waveConfig.interval) {
-                game.enemies.push(new Enemy());
+                game.enemies.push(new Enemy()); if (typeof playSound === 'function') { playSound('enemySpawn', { volume: 0.3, pitch: 0.9 + Math.random() * 0.2 }); }
                 game.enemiesToSpawn--;
                 game.spawnTimer = 0;
             }
@@ -92,7 +93,8 @@ function gameLoop(timestamp) {
                 if (game.pinnedEnemy === enemy) game.pinnedEnemy = null;
                 game.enemies.splice(i, 1);
                 log('Enemy escaped! -1 life', 'spawn');
-                if (game.lives <= 0) { game.gameOver = true; log('GAME OVER', 'kill'); }
+                if (typeof playSound === 'function') { playSound('enemyEscape', { volume: 0.8 }); playSound('lifeLost', { volume: 0.6 }); }
+                if (game.lives <= 0) { game.gameOver = true; log('GAME OVER', 'kill'); if (typeof playSound === 'function') playSound('gameOver', { volume: 1.0 }); }
             } else if (!enemy.alive) {
                 if (game.pinnedEnemy === enemy) game.pinnedEnemy = null;
                 game.enemies.splice(i, 1);
@@ -107,8 +109,8 @@ function gameLoop(timestamp) {
             game.waveInProgress = false;
             game.wave++;
             document.getElementById('start-btn').disabled = false;
-            if (game.wave > WAVES.length) { game.victory = true; log('VICTORY!', 'kill'); }
-            else log(`Wave complete! Wave ${game.wave} ready.`, 'kill');
+            if (game.wave > WAVES.length) { game.victory = true; log('VICTORY!', 'kill'); if (typeof playSound === 'function') playSound('victory', { volume: 1.0 }); }
+            else log(`Wave complete! Wave ${game.wave} ready.`, 'kill'); if (typeof playSound === 'function') playSound('waveComplete', { volume: 0.7 });
         }
     }
     
@@ -137,6 +139,16 @@ function gameLoop(timestamp) {
         ctx.font = '50px "Orbitron"';
         ctx.textAlign = 'center';
         ctx.fillText('VICTORY!', canvas.width/2, canvas.height/2);
+    }
+    
+    // Draw paused screen
+    if (game.paused && !game.gameOver && !game.victory) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ffcc00';
+        ctx.font = '50px "Orbitron"';
+        ctx.textAlign = 'center';
+        ctx.fillText('PAUSED', canvas.width/2, canvas.height/2);
     }
     
     updateUI();

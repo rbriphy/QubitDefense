@@ -42,7 +42,11 @@ const WAVES = [
     { count: 20, interval: 1000 }
 ];
 
+// Display settings
+let showWavefunction = true;
+let showBlochSphere = true;
+
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { TOWER_TYPES, PATH, WAVES };
+    module.exports = { TOWER_TYPES, PATH, WAVES, showWavefunction, showBlochSphere };
 }

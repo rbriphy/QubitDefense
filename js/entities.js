@@ -45,7 +45,7 @@ class Enemy {
     // Apply a quantum gate to this enemy's state
     applyGate(gateType) {
         switch (gateType) {
-            case 'hadamard': 
+            case 'hadamard': if (typeof playSound === 'function') playSound('gateApply', { volume: 0.4 }); 
                 applyHadamard(this.quantumState); 
                 break;
             case 'rx20': applyRx(this.quantumState, 20); break;
@@ -57,15 +57,15 @@ class Enemy {
             case 'rz20': applyRz(this.quantumState, 20); break;
             case 'rz45': applyRz(this.quantumState, 45); break;
             case 'rz90': applyRz(this.quantumState, 90); break;
-            case 'measure':
+            case 'measure': if (typeof playSound === 'function') playSound('measurement', { volume: 0.5 });
                 const resultZ = measure(this.quantumState, 'Z');
                 this.handleMeasurement(resultZ);
                 break;
-            case 'measureX':
+            case 'measureX': if (typeof playSound === 'function') playSound('measurement', { volume: 0.5 });
                 const resultX = measure(this.quantumState, 'X');
                 this.handleMeasurement(resultX);
                 break;
-            case 'measureY':
+            case 'measureY': if (typeof playSound === 'function') playSound('measurement', { volume: 0.5 });
                 const resultY = measure(this.quantumState, 'Y');
                 this.handleMeasurement(resultY);
                 break;
@@ -79,12 +79,12 @@ class Enemy {
             if (!result.alive) {
                 this.alive = false;
                 game.kills++;
-                game.credits += 15;
-                log(`Collapsed to ${result.result} (${result.basis}) - KILLED!`, 'kill');
+                game.credits += 15; if (typeof playSound === 'function') playSound('creditGain', { volume: 0.5 });
+                log(`Collapsed to ${result.result} (${result.basis}) - KILLED!`, 'kill'); if (typeof playSound === 'function') playSound('enemyKill', { volume: 0.8 });
                 createParticles(this.x, this.y, '#00ff00');
             } else {
                 this.quantumState = createQuantumState();
-                log(`Collapsed to ${result.result} (${result.basis}) - SURVIVED!`, 'collapse');
+                log(`Collapsed to ${result.result} (${result.basis}) - SURVIVED!`, 'collapse'); if (typeof playSound === 'function') playSound('enemySurvive', { volume: 0.6 });
                 createParticles(this.x, this.y, '#ff0000');
             }
         }
@@ -115,21 +115,23 @@ class Enemy {
         
         ctx.restore();
         
-        // Draw quantum state info
-        const amp0 = this.quantumState.alpha;
-        const amp1 = this.quantumState.beta;
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '8px "Share Tech Mono"';
-        ctx.textAlign = 'center';
-        
-        const formatAmp = (amp) => {
-            const re = `${amp.re >= 0 ? '' : '-'}${Math.abs(amp.re).toFixed(2)}`;
-            if (Math.abs(amp.im) < 0.005) return re;
-            return `${re}${amp.im >= 0 ? '+' : '-'}${Math.abs(amp.im).toFixed(2)}i`;
-        };
-        
-        ctx.fillText(`|0⟩:${formatAmp(amp0)}`, this.x, this.y - this.size - 12);
-        ctx.fillText(`|1⟩:${formatAmp(amp1)}`, this.x, this.y - this.size - 3);
+        // Draw quantum state info (wavefunction labels)
+        if (showWavefunction) {
+            const amp0 = this.quantumState.alpha;
+            const amp1 = this.quantumState.beta;
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '16px "Share Tech Mono"';
+            ctx.textAlign = 'center';
+            
+            const formatAmp = (amp) => {
+                const re = `${amp.re >= 0 ? '' : '-'}${Math.abs(amp.re).toFixed(2)}`;
+                if (Math.abs(amp.im) < 0.005) return re;
+                return `${re}${amp.im >= 0 ? '+' : '-'}${Math.abs(amp.im).toFixed(2)}i`;
+            };
+            
+            ctx.fillText(`|0⟩:${formatAmp(amp0)}`, this.x, this.y - this.size - 20);
+            ctx.fillText(`|1⟩:${formatAmp(amp1)}`, this.x, this.y - this.size - 3);
+        }
         
         // Draw health bar
         const barWidth = 40;
@@ -140,7 +142,9 @@ class Enemy {
         ctx.fillRect(this.x - barWidth/2, this.y + this.size + 5, barWidth * health, barHeight);
         
         // Draw mini Bloch sphere
-        drawBlochSphere(this.x + 25, this.y + 25, 12, this.quantumState);
+        if (showBlochSphere) {
+            drawBlochSphere(this.x + 25, this.y + 25, 12, this.quantumState);
+        }
     }
 }
 
@@ -216,7 +220,7 @@ class Tower {
             if (dist < this.range) {
                 enemy.applyGate(this.type);
                 this.cooldown = this.maxCooldown;
-                createParticles(this.x, this.y, TOWER_TYPES[this.type].color, 4);
+                createParticles(this.x, this.y, TOWER_TYPES[this.type].color, 4); if (typeof playSound === 'function') playSound('towerActivate', { volume: 0.4 });
                 break;
             }
         }

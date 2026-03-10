@@ -149,6 +149,7 @@ function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
 // Update hover info display
 function updateHoverInfo() {
     const info = document.getElementById('selected-enemy-info');
+    if (!info) return; // Guard against missing element
     
     // Use pinned enemy if set, otherwise use hovered enemy
     const targetEnemy = game.pinnedEnemy || game.hoveredEnemy;
@@ -159,8 +160,9 @@ function updateHoverInfo() {
         const betaMag = Complex.norm(state.beta);
         const alphaPhase = Math.atan2(state.alpha.im, state.alpha.re) * 180 / Math.PI;
         const betaPhase = Math.atan2(state.beta.im, state.beta.re) * 180 / Math.PI;
-        const pinnedText = game.pinnedEnemy ? ' (pinned)' : '';
-        info.innerHTML = `α: ${alphaMag.toFixed(2)}∠${alphaPhase.toFixed(0)}°<br>β: ${betaMag.toFixed(2)}∠${betaPhase.toFixed(0)}°${pinnedText}`;
+        const isPinned = game.pinnedEnemy;
+        const headerText = isPinned ? 'QUANTUM STATE (PINNED)' : 'QUANTUM STATE';
+        info.innerHTML = `<strong>${headerText}</strong><br>α: ${alphaMag.toFixed(2)}∠${alphaPhase.toFixed(0)}°<br>β: ${betaMag.toFixed(2)}∠${betaPhase.toFixed(0)}°`;
     } else {
         info.textContent = 'Hover enemy for state';
     }
@@ -169,6 +171,7 @@ function updateHoverInfo() {
 // Log message to message log
 function log(msg, type = '') {
     const logEl = document.getElementById('message-log');
+    if (!logEl) return; // Guard against missing element
     const entry = document.createElement('div');
     entry.className = `log-entry ${type}`;
     entry.textContent = msg;
@@ -253,8 +256,8 @@ function setupInput() {
             if (Math.sqrt(dx*dx + dy*dy) < 30) return;
         }
         
-        game.towers.push(new Tower(placementPreview.x, placementPreview.y, game.selectedTower));
-        game.credits -= cost;
+        game.towers.push(new Tower(placementPreview.x, placementPreview.y, game.selectedTower)); if (typeof playSound === 'function') playSound('towerPlace', { volume: 0.6 });
+        game.credits -= cost; if (typeof playSound === 'function') playSound('creditSpend', { volume: 0.5 });
     });
     
     // Click on sidebar to deselect tower
@@ -286,14 +289,15 @@ function setupInput() {
                 const refund = Math.floor(TOWER_TYPES[tower.type].cost * 0.5);
                 game.credits += refund;
                 game.towers.splice(i, 1);
-                log(`Removed (+${refund})`, 'collapse');
+                log(`Removed (+${refund})`, 'collapse'); if (typeof playSound === 'function') playSound('towerRemove', { volume: 0.5 });
                 break;
             }
         }
     });
     
     // Tower selection buttons
-    document.querySelectorAll('.tower-btn').forEach(btn => {
+    if (typeof playSound === 'function') playSound('select', { volume: 0.4 });
+        document.querySelectorAll('.tower-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
@@ -321,7 +325,7 @@ function setupInput() {
         game.enemiesToSpawn = waveConfig.count;
         game.spawnTimer = 0;
         document.getElementById('start-btn').disabled = true;
-        log(`Wave ${game.wave}: ${waveConfig.count} enemies`, 'spawn');
+        log(`Wave ${game.wave}: ${waveConfig.count} enemies`, 'spawn'); if (typeof playSound === 'function') playSound('waveStart', { volume: 0.7 });
     });
 }
 

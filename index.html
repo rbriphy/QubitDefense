@@ -164,11 +164,31 @@
                 </div>
             </div>
             
+            <div class="panel">
+                <h2>DISPLAY</h2>
+                <div id="display-toggle">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="wavefunction-toggle" checked>
+                        <span>Wavefunction</span>
+                    </label>
+                    <label class="toggle-label">
+                        <input type="checkbox" id="bloch-toggle" checked>
+                        <span>Bloch Sphere</span>
+                    </label>
+                </div>
+            </div>
+            
             <button id="start-btn">START WAVE</button>
+            <button id="pause-btn">PAUSE</button>
             
             <div class="panel">
                 <h2>QUANTUM STATE</h2>
                 <div id="selected-enemy-info">Hover enemy for state</div>
+            </div>
+            
+            <div class="panel">
+                <h2>LOG</h2>
+                <div id="message-log"></div>
             </div>
         </div>
     </div>
@@ -178,6 +198,7 @@
     <script src="js/systems.js"></script>
     <script src="js/entities.js"></script>
     <script src="js/game.js"></script>
+    <script src="js/audio.js"></script>
     <script>
         // Title screen functionality
         const titleScreen = document.getElementById('title-screen');
@@ -187,6 +208,12 @@
         const howToPlayBtn = document.getElementById('how-to-play-btn');
         const backBtn = document.getElementById('back-btn');
         
+        // Initialize audio when game starts
+        audioManager.init().then(() => {
+            audioManager.loadAllSounds();
+            audioManager.resume();
+        });
+
         // New Game button - start the game
         newGameBtn.addEventListener('click', () => {
             titleScreen.classList.add('hidden');
@@ -201,11 +228,34 @@
             howToPlayScreen.classList.remove('hidden');
         });
         
-        // Back button - return to title
-        backBtn.addEventListener('click', () => {
-            howToPlayScreen.classList.add('hidden');
-            titleScreen.classList.remove('hidden');
-        });
-    </script>
+    // Back button - return to title
+    backBtn.addEventListener('click', () => {
+        howToPlayScreen.classList.add('hidden');
+        titleScreen.classList.remove('hidden');
+    });
+    
+    // Display toggles
+    document.getElementById('wavefunction-toggle').addEventListener('change', (e) => {
+        showWavefunction = e.target.checked;
+    });
+    
+    document.getElementById('bloch-toggle').addEventListener('change', (e) => {
+        showBlochSphere = e.target.checked;
+    });
+    
+    // Pause button
+    document.getElementById('pause-btn').addEventListener('click', () => {
+        if (game.gameOver || game.victory) return;
+        game.paused = !game.paused;
+        const pauseBtn = document.getElementById('pause-btn');
+        if (game.paused) {
+            pauseBtn.textContent = 'RESUME';
+            pauseBtn.classList.add('paused');
+        } else {
+            pauseBtn.textContent = 'PAUSE';
+            pauseBtn.classList.remove('paused');
+        }
+    });
+</script>
 </body>
 </html>
