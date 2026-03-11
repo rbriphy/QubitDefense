@@ -17,6 +17,22 @@ const TOWER_TYPES = {
     measureY: { cost: 50, color: '#ffaa66', label: 'Y' }
 };
 
+// Career mode tower unlock progression (wave number when tower becomes available)
+const CAREER_UNLOCKS = {
+    1: ['rx20', 'rz20', 'measure'],
+    2: ['rz45'],
+    3: ['ry20'],
+    4: ['rz90', 'rx45'],
+    5: ['ry45', 'hadamard'],
+    7: ['rx90'],
+    8: ['ry90'],
+    9: ['measureX'],
+    10: ['measureY']
+};
+
+// Game mode: 'sandbox' or 'career'
+let gameMode = 'sandbox';
+
 // Path waypoints for enemies to follow
 const PATH = [
     {x: -30, y: 100},

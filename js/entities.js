@@ -77,13 +77,22 @@ class Enemy {
         if (result.collapsed) {
             this.flashTimer = 20;
             if (!result.alive) {
+                // Z-basis measurement killed the enemy (collapsed to |1⟩)
                 this.alive = false;
                 game.kills++;
                 game.credits += 15; if (typeof playSound === 'function') playSound('creditGain', { volume: 0.5 });
                 log(`Collapsed to ${result.result} (${result.basis}) - KILLED!`, 'kill'); if (typeof playSound === 'function') playSound('enemyKill', { volume: 0.8 });
                 createParticles(this.x, this.y, '#00ff00');
             } else {
-                this.quantumState = createQuantumState();
+                // X or Y measurement: keep enemy alive but collapse to eigenstate
+                // Z measurement: collapsed to |0⟩, keep enemy alive
+                if (result.newState) {
+                    // X or Y measurement - collapse to the measured eigenstate
+                    this.quantumState = result.newState;
+                } else {
+                    // Z measurement - collapsed to |0⟩
+                    this.quantumState = createQuantumState();
+                }
                 log(`Collapsed to ${result.result} (${result.basis}) - SURVIVED!`, 'collapse'); if (typeof playSound === 'function') playSound('enemySurvive', { volume: 0.6 });
                 createParticles(this.x, this.y, '#ff0000');
             }

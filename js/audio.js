@@ -33,8 +33,12 @@ const SOUND_EFFECTS = {
     error: 'error.mp3',
     select: 'select.mp3',
     creditGain: 'credit_gain.mp3',
-    creditSpend: 'credit_spend.mp3',
-    lifeLost: 'life_lost.mp3'
+    creditSpend: 'credit_sSpend.mp3',
+    lifeLost: 'life_lost.mp3',
+    
+    // Background music
+    mainTheme: 'Lost.mp3',
+    gameMusic: 'Where It All Ends.mp3'
 };
 
 // Sound categories for volume control
@@ -53,6 +57,8 @@ class AudioManager {
         this.masterVolume = 1.0;
         this.initialized = false;
         this.loadingSounds = {};
+        this.backgroundMusic = null;
+        this.backgroundMusicLoaded = false;
     }
     
     // Initialize the audio system
@@ -208,6 +214,101 @@ class AudioManager {
     stopAll() {
         // Note: This won't work with cloned audio nodes
         // For a more complete solution, we'd need to track playing instances
+    }
+    
+    // Load and play background music (loops)
+    playBackgroundMusic() {
+        // Stop any currently playing music first
+        this.stopBackgroundMusic();
+        
+        if (!this.initialized) return;
+        
+        this.backgroundMusic = new Audio('audio/' + SOUND_EFFECTS.mainTheme);
+        this.backgroundMusic.loop = true;
+        this.backgroundMusic.volume = SOUND_CATEGORIES.music.volume * this.masterVolume;
+        
+        this.backgroundMusic.addEventListener('canplaythrough', () => {
+            this.backgroundMusicLoaded = true;
+            this.backgroundMusic.play().catch(e => {
+                console.warn('Could not play background music:', e);
+            });
+        });
+        
+        this.backgroundMusic.addEventListener('error', (e) => {
+            console.warn('Failed to load background music');
+        });
+        
+        this.backgroundMusic.load();
+    }
+    
+    // Stop background music
+    stopBackgroundMusic() {
+        if (this.backgroundMusic) {
+            this.backgroundMusic.pause();
+            this.backgroundMusic.currentTime = 0;
+        }
+    }
+    
+    // Restart background music (for returning to title)
+    restartBackgroundMusic() {
+        if (this.backgroundMusic && this.backgroundMusicLoaded) {
+            this.backgroundMusic.currentTime = 0;
+            this.backgroundMusic.play().catch(e => {
+                console.warn('Could not restart background music:', e);
+            });
+        } else {
+            // If not loaded yet, just start playing
+            this.playBackgroundMusic();
+        }
+    }
+    
+    // Pause background music
+    pauseBackgroundMusic() {
+        if (this.backgroundMusic) {
+            this.backgroundMusic.pause();
+        }
+    }
+    
+    // Resume background music
+    resumeBackgroundMusic() {
+        if (this.backgroundMusic && this.backgroundMusicLoaded) {
+            this.backgroundMusic.play().catch(e => {
+                console.warn('Could not resume background music:', e);
+            });
+        }
+    }
+    
+    // Load and play game music (different song for when game starts)
+    playGameMusic() {
+        // Stop main theme first
+        this.stopBackgroundMusic();
+        
+        if (!this.initialized) return;
+        
+        // Create new audio for game music
+        this.backgroundMusic = new Audio('audio/' + SOUND_EFFECTS.gameMusic);
+        this.backgroundMusic.loop = true;
+        this.backgroundMusic.volume = SOUND_CATEGORIES.music.volume * this.masterVolume;
+        
+        this.backgroundMusic.addEventListener('canplaythrough', () => {
+            this.backgroundMusicLoaded = true;
+            this.backgroundMusic.play().catch(e => {
+                console.warn('Could not play game music:', e);
+            });
+        });
+        
+        this.backgroundMusic.addEventListener('error', (e) => {
+            console.warn('Failed to load game music');
+        });
+        
+        this.backgroundMusic.load();
+    }
+    
+    // Update background music volume
+    updateMusicVolume() {
+        if (this.backgroundMusic) {
+            this.backgroundMusic.volume = SOUND_CATEGORIES.music.volume * this.masterVolume;
+        }
     }
 }
 

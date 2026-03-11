@@ -4,6 +4,9 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
+// Get all tower keys
+const ALL_TOWER_KEYS = Object.keys(TOWER_TYPES);
+
 // Global game state
 const game = {
     credits: 100,
@@ -23,8 +26,98 @@ const game = {
     gameOver: false,
     victory: false,
     hoveredEnemy: null,
-    pinnedEnemy: null
+    pinnedEnemy: null,
+    unlockedTowers: []
 };
+
+// Function to get unlocked towers based on game mode and current wave
+function getUnlockedTowers() {
+    if (gameMode === 'sandbox') {
+        return [...ALL_TOWER_KEYS];
+    }
+    
+    // Career mode: unlock towers based on wave
+    const unlocked = [];
+    for (const waveNum of Object.keys(CAREER_UNLOCKS).map(Number).sort((a, b) => a - b)) {
+        if (game.wave >= waveNum) {
+            unlocked.push(...CAREER_UNLOCKS[waveNum]);
+        }
+    }
+    return unlocked;
+}
+
+// Check if a tower is unlocked
+function isTowerUnlocked(towerType) {
+    return game.unlockedTowers.includes(towerType);
+}
+
+// Initialize game for the selected mode
+function initGameForMode(mode) {
+    gameMode = mode;
+    game.unlockedTowers = getUnlockedTowers();
+    
+    // Select first available tower
+    if (game.unlockedTowers.length > 0) {
+        game.selectedTower = game.unlockedTowers[0];
+    }
+    
+    updateTowerButtons();
+}
+
+// Check for newly unlocked towers after wave completion
+function checkUnlocks() {
+    if (gameMode === 'sandbox') return;
+    
+    const previousUnlocked = [...game.unlockedTowers];
+    game.unlockedTowers = getUnlockedTowers();
+    
+    // Find newly unlocked towers
+    const newUnlocks = game.unlockedTowers.filter(t => !previousUnlocked.includes(t));
+    
+    if (newUnlocks.length > 0) {
+        for (const tower of newUnlocks) {
+            log(`New tower unlocked: ${TOWER_TYPES[tower].label}!`, 'spawn');
+        }
+        // Make newly unlocked towers visible in the sidebar
+        showNewTowerButtons(newUnlocks);
+    }
+    
+    updateTowerButtons();
+}
+
+// Show newly unlocked tower buttons in the sidebar
+function showNewTowerButtons(newTowerTypes) {
+    newTowerTypes.forEach(towerType => {
+        const btn = document.querySelector(`.tower-btn[data-tower="${towerType}"]`);
+        if (btn) {
+            btn.style.display = 'flex';
+            btn.classList.remove('locked');
+            btn.disabled = false;
+        }
+    });
+}
+
+// Update tower button states based on unlocks
+function updateTowerButtons() {
+    document.querySelectorAll('.tower-btn').forEach(btn => {
+        const towerType = btn.dataset.tower;
+        if (isTowerUnlocked(towerType)) {
+            btn.classList.remove('locked');
+            btn.disabled = false;
+            btn.style.display = 'flex';
+        } else {
+            if (gameMode === 'career') {
+                // In career mode, hide locked towers completely
+                btn.style.display = 'none';
+            } else {
+                // In sandbox mode, show as locked but visible
+                btn.classList.add('locked');
+                btn.disabled = true;
+                btn.style.display = 'flex';
+            }
+        }
+    });
+}
 
 // Update UI elements
 function updateUI() {
@@ -108,6 +201,7 @@ function gameLoop(timestamp) {
         if (game.waveInProgress && game.enemiesToSpawn === 0 && game.enemies.length === 0) {
             game.waveInProgress = false;
             game.wave++;
+            checkUnlocks();
             document.getElementById('start-btn').disabled = false;
             if (game.wave > WAVES.length) { game.victory = true; log('VICTORY!', 'kill'); if (typeof playSound === 'function') playSound('victory', { volume: 1.0 }); }
             else log(`Wave complete! Wave ${game.wave} ready.`, 'kill'); if (typeof playSound === 'function') playSound('waveComplete', { volume: 0.7 });

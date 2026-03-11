@@ -244,6 +244,9 @@ function setupInput() {
         // Clear pinned enemy when placing a tower
         game.pinnedEnemy = null;
         
+        // Check if tower is unlocked
+        if (!isTowerUnlocked(game.selectedTower)) return;
+        
         const cost = TOWER_TYPES[game.selectedTower].cost;
         if (game.credits < cost) { 
             return; 
@@ -299,6 +302,9 @@ function setupInput() {
     if (typeof playSound === 'function') playSound('select', { volume: 0.4 });
         document.querySelectorAll('.tower-btn').forEach(btn => {
         btn.addEventListener('click', () => {
+            // Check if tower is unlocked
+            if (btn.classList.contains('locked')) return;
+            
             document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             game.selectedTower = btn.dataset.tower;

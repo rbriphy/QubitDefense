@@ -148,32 +148,86 @@ function measureZ(state) {
 }
 
 // X-basis measurement (+ basis)
-// |+⟩ = die, |-⟩ = survive
+// Measures in X basis: |+⟩ and |-⟩ eigenstates
+// Only Z-basis kills - X measurement never kills, just collapses state
 function measureX(state) {
     // P(|+⟩) = |⟨+|ψ⟩|² = |(α+β)/√2|²
     const alphaPlusBeta = Complex.add(state.alpha, state.beta);
     const probPlus = (Complex.norm(alphaPlusBeta) ** 2) / 2;
     const roll = Math.random();
     
+    const invSqrt2 = 1 / Math.sqrt(2);
+    
     if (roll < probPlus) {
-        return { collapsed: true, alive: false, basis: 'X', result: '|+⟩' };
+        // Collapsed to |+⟩ = (|0⟩ + |1⟩)/√2
+        return { 
+            collapsed: true, 
+            alive: true,  // X measurement never kills
+            basis: 'X', 
+            result: '|+⟩',
+            // Set collapsed state to |+⟩
+            newState: {
+                alpha: Complex.create(invSqrt2, 0),
+                beta: Complex.create(invSqrt2, 0)
+            }
+        };
     } else {
-        return { collapsed: true, alive: true, basis: 'X', result: '|-⟩' };
+        // Collapsed to |-⟩ = (|0⟩ - |1⟩)/√2
+        return { 
+            collapsed: true, 
+            alive: true,  // X measurement never kills
+            basis: 'X', 
+            result: '|-⟩',
+            // Set collapsed state to |-⟩
+            newState: {
+                alpha: Complex.create(invSqrt2, 0),
+                beta: Complex.create(-invSqrt2, 0)
+            }
+        };
     }
 }
 
 // Y-basis measurement
-// |↗⟩ = die, |↙⟩ = survive
+// Measures in Y basis: |↗⟩ and |↙⟩ eigenstates
+// Only Z-basis kills - Y measurement never kills, just collapses state
 function measureY(state) {
-    // P(|↗⟩) = |⟨↗|ψ⟩|² = |(α-iβ)/√2|²
-    const alphaMinusIBeta = Complex.add(state.alpha, Complex.create(state.beta.im, -state.beta.re));
+    // Y basis states: |↗⟩ = (|0⟩ + i|1⟩)/√2, |↙⟩ = (|0⟩ - i|1⟩)/√2
+    // P(|↗⟩) = |⟨↗|ψ⟩|² = |(α* - iβ*)/√2|²
+    const alphaConj = Complex.conjugate(state.alpha);
+    const betaConj = Complex.conjugate(state.beta);
+    const minusIBeta = Complex.create(-betaConj.im, betaConj.re);
+    const alphaMinusIBeta = Complex.add(alphaConj, minusIBeta);
     const probUp = (Complex.norm(alphaMinusIBeta) ** 2) / 2;
     const roll = Math.random();
     
+    const invSqrt2 = 1 / Math.sqrt(2);
+    
     if (roll < probUp) {
-        return { collapsed: true, alive: false, basis: 'Y', result: '|↗⟩' };
+        // Collapsed to |↗⟩ = (|0⟩ + i|1⟩)/√2
+        return { 
+            collapsed: true, 
+            alive: true,  // Y measurement never kills
+            basis: 'Y', 
+            result: '|↗⟩',
+            // Set collapsed state to |↗⟩
+            newState: {
+                alpha: Complex.create(invSqrt2, 0),
+                beta: Complex.create(0, invSqrt2)
+            }
+        };
     } else {
-        return { collapsed: true, alive: true, basis: 'Y', result: '|↙⟩' };
+        // Collapsed to |↙⟩ = (|0⟩ - i|1⟩)/√2
+        return { 
+            collapsed: true, 
+            alive: true,  // Y measurement never kills
+            basis: 'Y', 
+            result: '|↙⟩',
+            // Set collapsed state to |↙⟩
+            newState: {
+                alpha: Complex.create(invSqrt2, 0),
+                beta: Complex.create(0, -invSqrt2)
+            }
+        };
     }
 }
 

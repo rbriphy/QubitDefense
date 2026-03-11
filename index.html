@@ -7,17 +7,35 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+    <!-- Pre-Menu Screen (for audio autoplay) -->
+    <div id="pre-menu-screen">
+        <button id="start-btn-pre" class="pre-menu-btn">QUANTUM TD</button>
+    </div>
+    
     <!-- Title Screen -->
-    <div id="title-screen">
+    <div id="title-screen" class="hidden">
+        <!-- Music Volume Slider -->
+        <div class="music-volume-slider" id="title-music-slider">
+            <span class="volume-icon">♪</span>
+            <input type="range" id="title-music-volume" min="0" max="100" value="50">
+        </div>
+        
         <h1 class="title">QUANTUM TD</h1>
         <div class="title-buttons">
-            <button id="new-game-btn" class="title-btn">New Game</button>
+            <button id="career-btn" class="title-btn">Career Mode</button>
+            <button id="sandbox-btn" class="title-btn">Sandbox Mode</button>
             <button id="how-to-play-btn" class="title-btn">How to Play</button>
         </div>
     </div>
     
     <!-- How to Play Screen -->
     <div id="how-to-play-screen" class="hidden">
+        <!-- Music Volume Slider -->
+        <div class="music-volume-slider" id="howtoplay-music-slider">
+            <span class="volume-icon">♪</span>
+            <input type="range" id="howtoplay-music-volume" min="0" max="100" value="50">
+        </div>
+        
         <h2>How to Play</h2>
         <div class="how-to-play-content">
             <p>• Enemies exist in quantum superposition |ψ⟩ = α|0⟩ + β|1⟩</p>
@@ -33,6 +51,15 @@
     </div>
     
     <div id="game-container" class="hidden">
+        <!-- End Game Button -->
+        <button id="end-game-btn" class="end-game-btn">End Game</button>
+        
+        <!-- Music Volume Slider -->
+        <div class="music-volume-slider" id="game-music-slider">
+            <span class="volume-icon">♪</span>
+            <input type="range" id="game-music-volume" min="0" max="100" value="50">
+        </div>
+        
         <div id="canvas-wrapper">
             <canvas id="game" width="1100" height="750"></canvas>
         </div>
@@ -185,6 +212,20 @@
                 <div id="message-log"></div>
             </div>
         </div>
+    <!-- Custom Confirm Modal -->
+    <div id="confirm-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="confirm-modal-title">CONFIRM</h2>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-modal-message">Are you sure?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-modal-cancel" class="modal-btn modal-btn-cancel">Cancel</button>
+                <button id="confirm-modal-btn" class="modal-btn modal-btn-confirm">Confirm</button>
+            </div>
+        </div>
     </div>
     
     <script src="js/config.js"></script>
@@ -198,9 +239,12 @@
         const titleScreen = document.getElementById('title-screen');
         const howToPlayScreen = document.getElementById('how-to-play-screen');
         const gameContainer = document.getElementById('game-container');
-        const newGameBtn = document.getElementById('new-game-btn');
+        const careerBtn = document.getElementById('career-btn');
+        const sandboxBtn = document.getElementById('sandbox-btn');
         const howToPlayBtn = document.getElementById('how-to-play-btn');
         const backBtn = document.getElementById('back-btn');
+        const preMenuScreen = document.getElementById('pre-menu-screen');
+        const preMenuBtn = document.getElementById('start-btn-pre');
         
         // Initialize audio when game starts
         audioManager.init().then(() => {
@@ -208,8 +252,80 @@
             audioManager.resume();
         });
 
-        // New Game button - start the game
-        newGameBtn.addEventListener('click', () => {
+        // Pre-menu button - start audio and show main menu
+        preMenuBtn.addEventListener('click', () => {
+            // Start background music (now allowed since user clicked)
+            audioManager.playBackgroundMusic();
+            // Show main menu
+            preMenuScreen.classList.add('hidden');
+            titleScreen.classList.remove('hidden');
+        });
+
+        // Reset game state
+        function resetGame() {
+            game.credits = 100;
+            game.wave = 1;
+            game.lives = 20;
+            game.kills = 0;
+            game.running = false;
+            game.waveInProgress = false;
+            game.speed = 1;
+            game.paused = false;
+            game.enemies = [];
+            game.towers = [];
+            game.particles = [];
+            game.spawnTimer = 0;
+            game.enemiesToSpawn = 0;
+            game.gameOver = false;
+            game.victory = false;
+            game.hoveredEnemy = null;
+            game.pinnedEnemy = null;
+            
+            // Reset speed buttons
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.speed === '1') btn.classList.add('active');
+            });
+            
+            // Reset start button
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('start-btn').textContent = 'START WAVE';
+            
+            // Reset pause button
+            const pauseBtn = document.getElementById('pause-btn');
+            pauseBtn.textContent = 'PAUSE';
+            pauseBtn.classList.remove('paused');
+            
+            // Clear message log
+            document.getElementById('message-log').innerHTML = '';
+            
+            // Reset tower buttons - show all for proper initialization
+            document.querySelectorAll('.tower-btn').forEach(btn => {
+                btn.style.display = 'flex';
+                btn.classList.remove('selected', 'locked');
+                btn.disabled = false;
+            });
+            
+            // Update UI
+            updateUI();
+        }
+
+        // Career Mode button - start game in career mode
+        careerBtn.addEventListener('click', () => {
+            audioManager.playGameMusic();
+            resetGame();
+            initGameForMode('career');
+            titleScreen.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            setupInput();
+            startGame();
+        });
+
+        // Sandbox Mode button - start game in sandbox mode
+        sandboxBtn.addEventListener('click', () => {
+            audioManager.playGameMusic();
+            resetGame();
+            initGameForMode('sandbox');
             titleScreen.classList.add('hidden');
             gameContainer.classList.remove('hidden');
             setupInput();
@@ -252,6 +368,87 @@
         } else {
             pauseBtn.textContent = 'PAUSE';
             pauseBtn.classList.remove('paused');
+        }
+    });
+    
+    // Music volume slider for title screen
+    const titleMusicSlider = document.getElementById('title-music-volume');
+    titleMusicSlider.addEventListener('input', (e) => {
+        const volume = e.target.value / 100;
+        audioManager.setCategoryVolume('music', volume);
+        audioManager.updateMusicVolume();
+    });
+    
+    // Music volume slider for game screen
+    const gameMusicSlider = document.getElementById('game-music-volume');
+    gameMusicSlider.addEventListener('input', (e) => {
+        const volume = e.target.value / 100;
+        audioManager.setCategoryVolume('music', volume);
+        audioManager.updateMusicVolume();
+    });
+    
+    // Music volume slider for how to play screen
+    const howtoplayMusicSlider = document.getElementById('howtoplay-music-volume');
+    howtoplayMusicSlider.addEventListener('input', (e) => {
+        const volume = e.target.value / 100;
+        audioManager.setCategoryVolume('music', volume);
+        audioManager.updateMusicVolume();
+    });
+    
+    // End Game button - return to main menu
+    document.getElementById('end-game-btn').addEventListener('click', () => {
+        showConfirmModal(
+            'END GAME',
+            'Are you sure you want to end the game? All progress will be lost.',
+            () => {
+                // Stop the game
+                game.running = false;
+                game.gameOver = false;
+                game.victory = false;
+                game.paused = false;
+                
+                // Hide game container
+                gameContainer.classList.add('hidden');
+                
+                // Show title screen
+                titleScreen.classList.remove('hidden');
+                
+                // Stop game music and play background music
+                audioManager.playBackgroundMusic();
+            }
+        );
+    });
+    
+    // Custom modal functions
+    function showConfirmModal(title, message, onConfirm) {
+        const modal = document.getElementById('confirm-modal');
+        const modalTitle = document.getElementById('confirm-modal-title');
+        const modalMessage = document.getElementById('confirm-modal-message');
+        const confirmBtn = document.getElementById('confirm-modal-btn');
+        
+        modalTitle.textContent = title;
+        modalMessage.textContent = message;
+        
+        // Store the callback
+        modal.dataset.onConfirm = '';
+        
+        confirmBtn.onclick = () => {
+            modal.classList.add('hidden');
+            onConfirm();
+        };
+        
+        modal.classList.remove('hidden');
+    }
+    
+    // Close modal on cancel button click
+    document.getElementById('confirm-modal-cancel').addEventListener('click', () => {
+        document.getElementById('confirm-modal').classList.add('hidden');
+    });
+    
+    // Close modal on backdrop click
+    document.getElementById('confirm-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'confirm-modal') {
+            document.getElementById('confirm-modal').classList.add('hidden');
         }
     });
 </script>
