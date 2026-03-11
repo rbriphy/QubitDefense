@@ -1094,3 +1094,226 @@ h1 {
         height: 380px;
     }
 }
+
+/* ============================================
+   TUTORIAL MODE STYLES
+   ============================================ */
+
+/* Tutorial Overlay */
+#tutorial-overlay {
+    position: absolute;
+    top: 80px;
+    right: 310px;
+    background: rgba(5, 5, 25, 0.97);
+    border: 2px solid #00ffff;
+    border-radius: 12px;
+    padding: 20px 30px;
+    max-width: 500px;
+    width: 90%;
+    z-index: 100;
+    box-shadow: 
+        0 0 30px rgba(0, 255, 255, 0.4),
+        0 0 60px rgba(0, 255, 255, 0.2),
+        inset 0 0 30px rgba(0, 255, 255, 0.05);
+    animation: tutorialPulse 2s ease-in-out infinite;
+}
+
+@keyframes tutorialPulse {
+    0%, 100% { box-shadow: 0 0 30px rgba(0, 255, 255, 0.4), 0 0 60px rgba(0, 255, 255, 0.2); }
+    50% { box-shadow: 0 0 40px rgba(0, 255, 255, 0.6), 0 0 80px rgba(0, 255, 255, 0.3); }
+}
+
+.tutorial-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.tutorial-progress {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: #888888;
+}
+
+.tutorial-skip-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    padding: 5px 12px;
+    border: 1px solid #666666;
+    background: rgba(255, 255, 255, 0.05);
+    color: #888888;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.tutorial-skip-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #aaaaaa;
+    border-color: #888888;
+}
+
+#tutorial-overlay h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.3rem;
+    color: #00ffff;
+    text-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    margin-bottom: 12px;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+#tutorial-overlay p {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.95rem;
+    color: #cccccc;
+    line-height: 1.6;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.tutorial-continue-btn {
+    display: block;
+    margin: 0 auto;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.9rem;
+    padding: 12px 40px;
+    border: 2px solid #00ffff;
+    background: rgba(0, 255, 255, 0.15);
+    color: #00ffff;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.tutorial-continue-btn:hover {
+    background: rgba(0, 255, 255, 0.3);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+/* Tutorial Highlight Effect */
+.tutorial-highlight {
+    position: relative;
+    z-index: 50;
+    box-shadow: 
+        0 0 0 4px rgba(0, 255, 255, 0.3),
+        0 0 20px 5px rgba(0, 255, 255, 0.6) !important;
+    border-radius: 8px;
+    animation: highlightPulse 1s ease-in-out infinite;
+}
+
+@keyframes highlightPulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(0, 255, 255, 0.3), 0 0 20px 5px rgba(0, 255, 255, 0.6); }
+    50% { box-shadow: 0 0 0 6px rgba(0, 255, 255, 0.5), 0 0 30px 8px rgba(0, 255, 255, 0.8); }
+}
+
+/* Tutorial Hint Arrow */
+.tutorial-hint-arrow {
+    display: none;
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-top: 16px solid #00ffff;
+    filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.8));
+    animation: arrowBounce 1s ease-in-out infinite;
+}
+
+@keyframes arrowBounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(5px); }
+}
+
+/* Tutorial Complete Screen */
+.tutorial-complete {
+    text-align: center;
+    padding: 20px;
+}
+
+.tutorial-complete h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.6rem;
+    color: #00ff88;
+    text-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+    margin-bottom: 15px;
+    letter-spacing: 2px;
+}
+
+.tutorial-complete p {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.1rem;
+    color: #cccccc;
+    margin-bottom: 25px;
+}
+
+/* Tower buttons in tutorial - ensure they're visible */
+.tutorial-highlight.tower-btn {
+    box-shadow: 
+        0 0 0 4px rgba(0, 255, 255, 0.5),
+        0 0 25px 8px rgba(0, 255, 255, 0.8) !important;
+}
+
+.tutorial-highlight#start-btn {
+    box-shadow: 
+        0 0 0 4px rgba(0, 255, 0, 0.5),
+        0 0 25px 8px rgba(0, 255, 0, 0.8) !important;
+}
+
+.tutorial-highlight#game {
+    box-shadow: 
+        0 0 0 4px rgba(0, 255, 255, 0.3),
+        0 0 30px 10px rgba(0, 255, 255, 0.5) !important;
+}
+
+/* Tutorial Placement Hint */
+.tutorial-placement-hint {
+    display: none;
+    position: absolute;
+    pointer-events: none;
+    z-index: 60;
+    width: 60px;
+    height: 60px;
+}
+
+/* Individual placement hint circle (for multiple hints) */
+.tutorial-placement-hint-circle {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border: 3px solid #ffcc00;
+    border-radius: 50%;
+    box-shadow: 
+        0 0 10px #ffcc00,
+        0 0 20px #ffcc0088,
+        0 0 30px #ffcc0044,
+        inset 0 0 15px #ffcc0033;
+    animation: placementHintPulse 1.5s ease-in-out infinite;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes placementHintPulse {
+    0%, 100% { 
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.8;
+        box-shadow: 
+            0 0 10px #ffcc00,
+            0 0 20px #ffcc0088,
+            0 0 30px #ffcc0044,
+            inset 0 0 15px #ffcc0033;
+    }
+    50% { 
+        transform: translate(-50%, -50%) scale(1.15);
+        opacity: 1;
+        box-shadow: 
+            0 0 15px #ffcc00,
+            0 0 30px #ffcc00aa,
+            0 0 45px #ffcc0066,
+            inset 0 0 20px #ffcc0044;
+    }
+}

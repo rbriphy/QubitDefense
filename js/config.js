@@ -19,9 +19,9 @@ const TOWER_TYPES = {
 
 // Career mode tower unlock progression (wave number when tower becomes available)
 const CAREER_UNLOCKS = {
-    1: ['rx20', 'rz20', 'measure'],
+    1: ['rx20', 'measure'],
     2: ['rz45'],
-    3: ['ry20'],
+    3: ['ry20', 'rz20'],
     4: ['rz90', 'rx45'],
     5: ['ry45', 'hadamard'],
     7: ['rx90'],
@@ -57,6 +57,15 @@ const WAVES = [
     { count: 15, interval: 8000 },
     { count: 20, interval: 8000 }
 ];
+
+// Tutorial waves - simplified for learning
+const TUTORIAL_WAVES = [
+    { count: 1, interval: 3000 },   // First wave: single enemy to learn
+    { count: 3, interval: 2500 }    // Second wave: few enemies to test defense
+];
+
+// Tutorial mode tower unlocks - only Rx90 and Z-Measurement available
+const TUTORIAL_UNLOCKS = ['rx90', 'measure'];
 
 // Display settings
 let showWavefunction = true;

@@ -22,10 +22,12 @@
         
         <h1 class="title">QUBIT DEFENSE</h1>
         <div class="title-buttons">
+            <button id="tutorial-btn" class="title-btn">Tutorial</button>
             <button id="career-btn" class="title-btn">Career Mode</button>
             <button id="sandbox-btn" class="title-btn">Sandbox Mode</button>
             <button id="how-to-play-btn" class="title-btn">How to Play</button>
         </div>
+
     </div>
     
     <!-- How to Play Screen - Multi-page -->
@@ -417,6 +419,7 @@
     <script src="js/entities.js"></script>
     <script src="js/game.js"></script>
     <script src="js/audio.js"></script>
+    <script src="js/tutorial.js"></script>
     <script>
         // Title screen functionality
         const titleScreen = document.getElementById('title-screen');
@@ -530,6 +533,32 @@
         
         // Hover sound for sandbox button
         sandboxBtn.addEventListener('mouseenter', () => {
+            if (typeof playSound === 'function') playSound('buttonHover', { volume: 0.3 });
+        });
+
+        // Tutorial Mode button
+        const tutorialBtn = document.getElementById('tutorial-btn');
+        
+        tutorialBtn.addEventListener('click', () => {
+            if (typeof playSound === 'function') playSound('buttonClick', { volume: 0.5 });
+            audioManager.playGameMusic();
+            resetGame();
+            
+            // Force start tutorial (allows restarting even if previously completed)
+            tutorialManager.forceStart();
+            initGameForMode('tutorial');
+            
+            // Start the tutorial
+            tutorialManager.start();
+            
+            titleScreen.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            setupInput();
+            startGame();
+        });
+        
+        // Hover sound for tutorial button
+        tutorialBtn.addEventListener('mouseenter', () => {
             if (typeof playSound === 'function') playSound('buttonHover', { volume: 0.3 });
         });
         

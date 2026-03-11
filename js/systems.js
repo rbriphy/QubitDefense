@@ -210,6 +210,14 @@ function setupInput() {
             const dy = enemy.y - y;
             if (Math.sqrt(dx*dx + dy*dy) < enemy.size + 15) {
                 game.hoveredEnemy = enemy;
+                
+                // Notify tutorial manager of enemy hover (only if on correct step)
+                if (gameMode === 'tutorial' && 
+                    typeof tutorialManager !== 'undefined' &&
+                    tutorialManager.isActive &&
+                    tutorialManager.steps[tutorialManager.currentStep].id === 'hoverEnemy') {
+                    tutorialManager.onEnemyHovered();
+                }
                 break;
             }
         }
@@ -262,6 +270,11 @@ function setupInput() {
         
         game.towers.push(new Tower(placementPreview.x, placementPreview.y, game.selectedTower)); if (typeof playSound === 'function') playSound('towerPlace', { volume: 0.6 });
         game.credits -= cost;
+        
+        // Notify tutorial manager of tower placement
+        if (gameMode === 'tutorial' && typeof tutorialManager !== 'undefined') {
+            tutorialManager.onTowerPlaced();
+        }
     });
     
     // Click on sidebar to deselect tower
@@ -294,10 +307,16 @@ function setupInput() {
                 game.credits += refund;
                 game.towers.splice(i, 1);
                 log(`Removed (+${refund})`, 'collapse'); if (typeof playSound === 'function') playSound('towerRemove', { volume: 0.5 });
+                
+                // Notify tutorial manager of tower removal
+                if (gameMode === 'tutorial' && typeof tutorialManager !== 'undefined') {
+                    tutorialManager.checkStepCompletion();
+                }
                 break;
             }
         }
     });
+
     
     // Tower selection buttons
         document.querySelectorAll('.tower-btn').forEach(btn => {
@@ -308,8 +327,14 @@ function setupInput() {
             document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             game.selectedTower = btn.dataset.tower;
+            
+            // Notify tutorial manager of tower selection
+            if (gameMode === 'tutorial' && typeof tutorialManager !== 'undefined') {
+                tutorialManager.checkStepCompletion();
+            }
         });
     });
+
     
     // Speed toggle buttons
     document.querySelectorAll('.speed-btn').forEach(btn => {
@@ -324,7 +349,8 @@ function setupInput() {
     document.getElementById('start-btn').addEventListener('click', () => {
         if (game.waveInProgress || game.gameOver || game.victory) return;
         
-        const waveConfig = WAVES[game.wave - 1];
+        // Use the appropriate wave config based on game mode
+        const waveConfig = (typeof getCurrentWaveConfig !== 'undefined') ? getCurrentWaveConfig() : WAVES[game.wave - 1];
         if (!waveConfig) { game.victory = true; log('VICTORY!', 'kill'); return; }
         
         game.waveInProgress = true;
@@ -332,7 +358,13 @@ function setupInput() {
         game.spawnTimer = 0;
         document.getElementById('start-btn').disabled = true;
         log(`Wave ${game.wave}: ${waveConfig.count} enemies`, 'spawn'); if (typeof playSound === 'function') playSound('waveStart', { volume: 0.7 });
+        
+        // Notify tutorial manager
+        if (gameMode === 'tutorial' && typeof tutorialManager !== 'undefined') {
+            tutorialManager.onWaveStarted();
+        }
     });
+
 }
 
 // Draw placement preview

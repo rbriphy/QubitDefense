@@ -37,6 +37,10 @@ function getUnlockedTowers() {
         return [...ALL_TOWER_KEYS];
     }
     
+    if (gameMode === 'tutorial') {
+        return [...TUTORIAL_UNLOCKS];
+    }
+    
     // Career mode: unlock towers based on wave
     const unlocked = [];
     for (const waveNum of Object.keys(CAREER_UNLOCKS).map(Number).sort((a, b) => a - b)) {
@@ -62,12 +66,17 @@ function initGameForMode(mode) {
         game.selectedTower = game.unlockedTowers[0];
     }
     
+    // Give more credits in tutorial mode
+    if (gameMode === 'tutorial') {
+        game.credits = 200;
+    }
+    
     updateTowerButtons();
 }
 
 // Check for newly unlocked towers after wave completion
 function checkUnlocks() {
-    if (gameMode === 'sandbox') return;
+    if (gameMode === 'sandbox' || gameMode === 'tutorial') return;
     
     const previousUnlocked = [...game.unlockedTowers];
     game.unlockedTowers = getUnlockedTowers();
@@ -107,8 +116,8 @@ function updateTowerButtons() {
             btn.disabled = false;
             btn.style.display = 'flex';
         } else {
-            if (gameMode === 'career') {
-                // In career mode, hide locked towers completely
+            if (gameMode === 'career' || gameMode === 'tutorial') {
+                // In career and tutorial modes, hide locked towers completely
                 btn.style.display = 'none';
             } else {
                 // In sandbox mode, show as locked but visible
@@ -126,6 +135,22 @@ function updateUI() {
     document.getElementById('wave').textContent = game.wave;
     document.getElementById('lives').textContent = game.lives;
     document.getElementById('kills').textContent = game.kills;
+}
+
+// Get the appropriate wave config for the current game mode
+function getCurrentWaveConfig() {
+    if (gameMode === 'tutorial') {
+        return TUTORIAL_WAVES[game.wave - 1] || TUTORIAL_WAVES[0];
+    }
+    return WAVES[game.wave - 1];
+}
+
+// Get the total number of waves for current mode
+function getTotalWaves() {
+    if (gameMode === 'tutorial') {
+        return TUTORIAL_WAVES.length;
+    }
+    return WAVES.length;
 }
 
 // Main game loop
@@ -163,7 +188,7 @@ function gameLoop(timestamp) {
         // Spawn enemies
         if (game.enemiesToSpawn > 0) {
             game.spawnTimer += dt;
-            const waveConfig = WAVES[game.wave - 1];
+            const waveConfig = getCurrentWaveConfig();
             const spawnDelay = game.firstSpawnDone ? waveConfig.interval : 1000;
             if (waveConfig && game.spawnTimer >= spawnDelay) {
                 game.firstSpawnDone = true;
@@ -190,7 +215,9 @@ function gameLoop(timestamp) {
                 game.enemies.splice(i, 1);
                 log('Enemy escaped! -1 life', 'spawn');
                 if (typeof playSound === 'function') { playSound('lifeLost', { volume: 0.8 }); }
-                if (game.lives <= 0) { 
+                
+                // In tutorial mode, don't end game on escape
+                if (game.lives <= 0 && gameMode !== 'tutorial') { 
                     game.gameOver = true; 
                     log('GAME OVER', 'kill'); 
                     if (typeof playSound === 'function') playSound('gameOver', { volume: 1.0 });
@@ -202,6 +229,12 @@ function gameLoop(timestamp) {
                 }
             } else if (!enemy.alive) {
                 if (game.pinnedEnemy === enemy) game.pinnedEnemy = null;
+                
+                // Notify tutorial manager of kill
+                if (gameMode === 'tutorial' && typeof tutorialManager !== 'undefined') {
+                    tutorialManager.onEnemyKilled();
+                }
+                
                 game.enemies.splice(i, 1);
             }
         }
@@ -215,17 +248,41 @@ function gameLoop(timestamp) {
             game.wave++;
             checkUnlocks();
             document.getElementById('start-btn').disabled = false;
-            if (game.wave > WAVES.length) { 
-                game.victory = true; 
-                log('VICTORY!', 'kill'); 
-                if (typeof playSound === 'function') playSound('victory', { volume: 1.0 });
-                // Hide end game button, show return to menu button
-                document.getElementById('end-game-btn').style.display = 'none';
-                document.getElementById('return-menu-btn').classList.remove('hidden');
-                // Stop game music
-                audioManager.stopBackgroundMusic();
+            
+            const totalWaves = getTotalWaves();
+            if (game.wave > totalWaves) { 
+                if (gameMode === 'tutorial') {
+                    // Tutorial victory - advance to next tutorial step
+                    if (typeof tutorialManager !== 'undefined') {
+                        tutorialManager.checkStepCompletion();
+                    }
+                    game.wave = 1;
+                    game.enemiesToSpawn = 0;
+                    game.waveInProgress = false;
+                    document.getElementById('start-btn').disabled = false;
+                } else {
+                    game.victory = true; 
+                    log('VICTORY!', 'kill'); 
+                    if (typeof playSound === 'function') playSound('victory', { volume: 1.0 });
+                    // Hide end game button, show return to menu button
+                    document.getElementById('end-game-btn').style.display = 'none';
+                    document.getElementById('return-menu-btn').classList.remove('hidden');
+                    // Stop game music
+                    audioManager.stopBackgroundMusic();
+                }
             }
-            else log(`Wave complete! Wave ${game.wave} ready.`, 'kill'); if (typeof playSound === 'function' && !game.gameOver) playSound('waveComplete', { volume: 0.7 });
+            else {
+                if (gameMode === 'tutorial') {
+                    // In tutorial, check for step completion after wave
+                    if (typeof tutorialManager !== 'undefined') {
+                        tutorialManager.tutorialWavesCompleted++;
+                        tutorialManager.checkStepCompletion();
+                    }
+                } else {
+                    log(`Wave complete! Wave ${game.wave} ready.`, 'kill');
+                }
+                if (typeof playSound === 'function' && !game.gameOver) playSound('waveComplete', { volume: 0.7 });
+            }
         }
     }
     
@@ -279,5 +336,5 @@ function startGame() {
 
 // Export for use in main script
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { game, updateUI, gameLoop, startGame };
+    module.exports = { game, updateUI, gameLoop, startGame, getCurrentWaveConfig, getTotalWaves };
 }
