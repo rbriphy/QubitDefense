@@ -167,14 +167,8 @@
             <div class="panel">
                 <h2>DISPLAY</h2>
                 <div id="display-toggle">
-                    <label class="toggle-label">
-                        <input type="checkbox" id="wavefunction-toggle" checked>
-                        <span>Wavefunction</span>
-                    </label>
-                    <label class="toggle-label">
-                        <input type="checkbox" id="bloch-toggle" checked>
-                        <span>Bloch Sphere</span>
-                    </label>
+                    <button class="display-btn active" id="wavefunction-toggle">Wavefunction</button>
+                    <button class="display-btn active" id="bloch-toggle">Bloch Sphere</button>
                 </div>
             </div>
             
@@ -235,12 +229,16 @@
     });
     
     // Display toggles
-    document.getElementById('wavefunction-toggle').addEventListener('change', (e) => {
-        showWavefunction = e.target.checked;
+    document.getElementById('wavefunction-toggle').addEventListener('click', (e) => {
+        const btn = e.target;
+        btn.classList.toggle('active');
+        showWavefunction = btn.classList.contains('active');
     });
     
-    document.getElementById('bloch-toggle').addEventListener('change', (e) => {
-        showBlochSphere = e.target.checked;
+    document.getElementById('bloch-toggle').addEventListener('click', (e) => {
+        const btn = e.target;
+        btn.classList.toggle('active');
+        showBlochSphere = btn.classList.contains('active');
     });
     
     // Pause button
