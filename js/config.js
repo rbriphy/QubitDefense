@@ -3,6 +3,12 @@
 // Starting lives for the player
 const STARTING_LIVES = 10;
 
+// Starting credits for sandbox mode (unlimited)
+const SANDBOX_STARTING_CREDITS = 999999;
+
+// Starting credits for career mode
+const CAREER_STARTING_CREDITS = 100;
+
 // Tower types with costs, colors, and labels
 const TOWER_TYPES = {
     hadamard: { cost: 15, color: '#00ffff', label: 'H' },

@@ -9,7 +9,7 @@ const ALL_TOWER_KEYS = Object.keys(TOWER_TYPES);
 
 // Global game state
 const game = {
-    credits: 50,
+    credits: 100,
     wave: 1,
     lives: STARTING_LIVES,
     kills: 0,
@@ -66,10 +66,13 @@ function initGameForMode(mode) {
         game.selectedTower = game.unlockedTowers[0];
     }
     
-    // Give more credits in tutorial mode
-    if (gameMode === 'tutorial') {
+    // Set credits based on game mode
+    if (gameMode === 'sandbox') {
+        game.credits = SANDBOX_STARTING_CREDITS;
+    } else if (gameMode === 'tutorial') {
         game.credits = 200;
     }
+    // Career mode keeps default credits (100) from game object initialization
     
     updateTowerButtons();
 }

@@ -7,7 +7,6 @@
 - [Game Modes](#game-modes)
 - [Towers](#towers)
 - [Quantum Mechanics in the Game](#quantum-mechanics-in-the-game)
-- [Controls](#controls)
 - [Running the Game](#running-the-game)
 - [Credits](#credits)
 
